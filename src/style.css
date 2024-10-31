@@ -1,0 +1,327 @@
+:root
+{
+    --red: rgb(199, 154, 119);
+    --green:rgb(113, 169, 113);
+    --blue:rgb(80, 142, 197);
+    --max-select-width: clamp(50px, 500px, calc(100vw - 2rem));
+}
+*
+{
+    scrollbar-color: rgba(157, 157, 157, 0.4) transparent;
+    scrollbar-width: thin;
+    text-underline-offset: 5px;
+}
+html
+{    
+    scroll-behavior: smooth;
+}
+@font-face 
+{
+    font-family: 'Custom';
+    src: url('/fonts/cour-webfont.woff2') format('woff2'),
+         url('/fonts/cour-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+
+}
+@font-face 
+{
+    font-family: 'Custom';
+    src: url('/fonts/courbd-webfont.woff2') format('woff2'),
+         url('/fonts/courbd-webfont.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+
+}
+@font-face 
+{
+    font-family: 'Custom';
+    src: url('/fonts/courbi-webfont.woff2') format('woff2'),
+         url('/fonts/courbi-webfont.woff') format('woff');
+    font-weight: bold;
+    font-style: italic;
+
+}
+@font-face {
+    font-family: 'Custom';
+    src: url('/fonts/couri-webfont.woff2') format('woff2'),
+         url('/fonts/couri-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: italic;
+
+}
+    
+body
+{
+    background-color: rgb(45, 45, 45);
+    color: white;
+    font-family: 'Custom', 'Courier New', monospace;
+    font-weight: normal;
+    /* font-family: Courier New, Courier, Lucida Sans Typewriter, Lucida Typewriter, monospace;*/
+}
+#statement p
+{
+    margin: 0 0 2rem;
+}
+.text
+{    
+    line-height:2rem;
+}
+em
+{
+    text-decoration: underline;
+}
+video
+{
+    display: block;
+    position: relative;
+    margin: 0rem 0 1rem;
+}
+audio
+{
+    display: block;
+    margin: 1rem 0 0;
+    width: var(--max-select-width);
+}
+.canvas-vid-container, #voice-input
+{
+    position: relative;
+    min-height: 100px;
+    width: 100%;
+    /* display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px; */
+}
+.canvas-container
+{
+    display: block;
+    position: relative;
+    width: 100%;
+    /* height: 420px; */
+    height: auto;
+    left: 0px;
+}
+.mirrored
+{
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+}
+#media-canvas, #detect-canvas, #crop-canvas
+{
+    position: absolute;
+    /* width: 100%;
+    height: 100%; */
+}
+#crop-canvas.centered
+{
+    position: relative;
+    max-width: 100%;
+    top: 0;
+    margin: 0 auto 0;
+    display:flex;
+    flex-direction: row;
+    justify-content: center;
+}
+.device-text
+{
+    font-size: 1.5rem;
+    margin: auto auto;
+    width: 100%;
+    /* height: 100%; */
+    text-align: left;
+    position: absolute;
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%);
+}
+#voice-input .device-text
+{
+    position: relative;
+    margin: 2.5rem 0 1.5rem;
+    text-align: left;
+    transform: translate(0);
+    left: 0;
+    width: var(--max-select-width);
+}
+.error
+{
+    color:var(--red);
+}
+.loading
+{
+    animation: loadingFade 2s forwards infinite;
+}
+@keyframes loadingFade
+{
+    0%, 100%
+    {
+        opacity: 0;
+    }
+    50%
+    {
+        opacity: 1;
+    }
+}
+.hidden
+{
+    display:none;
+}
+.top-group
+{
+    display: flex;
+    flex-direction: column;
+    height: 100svh;
+    justify-content: space-between;
+    padding: 1rem 1rem;
+}
+.title
+{
+    display: flex;
+    justify-content: left;
+    font-size: 2.5rem;
+    padding: 1rem 0 1rem 1rem;
+}
+.title h1
+{    
+    font-weight: normal;
+    cursor: default;
+}
+.main-menu
+{
+    margin: auto 0;
+    height: auto;
+}
+a, a:link, a:visited
+{
+    color: white;
+    text-decoration: underline;
+}
+.main-menu button, .main-menu a
+{
+    color: white;
+    text-decoration: underline;
+    background-color: transparent;
+    border-color: transparent;
+    padding: 0;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+.main-menu ul
+{
+    display: flex;
+    flex-direction: column;
+    row-gap: 2rem;
+    flex: 1 0 auto;
+    /* list-style: none; */
+    /* padding: 0 0 0 1.5rem; */
+}
+.main-menu ul li::before
+{
+    /* content: "\2192"; */
+    /* margin-right: 10px;  */
+    font-size: 3em;
+}
+.sub-title
+{    
+    padding: 1rem 0 0.5rem 1rem;
+    flex: 0 0 auto;
+    margin-bottom: 0;
+}
+.sub-title h2
+{    
+    font-weight: normal;
+}
+.top-become-a-face-but:hover
+{
+    color:var(--blue);
+}
+.top-view-faces-but:hover
+{
+    color:var(--green);
+}
+.top-statement-link:hover
+{
+    color:var(--red);
+}
+.page-padding
+{
+    padding: 1rem;
+}
+.input button
+{
+    margin: 1rem 1rem 1rem 0;
+    padding: 0.5rem 1rem 0.5rem;
+    background-color: rgb(150, 150, 150);
+    border-width: 0;
+    color: white;
+    transition: color 0.5s;
+}
+.input .back:hover
+{
+    background-color:var(--red);
+}
+.input .take:hover
+{
+    background-color:var(--blue);
+}
+.input .next:hover
+{
+    background-color:var(--green);
+}
+.instructions
+{
+    margin: 0 0 1rem 0;
+}
+.select label
+{
+    display: block;
+    margin: 0 0 1rem 0;
+    font-weight: bold;
+}
+select
+{
+    padding: 1rem;
+    width: var(--max-select-width);
+    margin: 0 0 1.0rem 0;
+}
+#controls h2
+{
+    margin: 2rem 0 1rem;
+
+}
+#controls ul
+{
+    margin: 0;
+    padding: 0 0 0 1rem;
+    line-height: 4;
+}
+#thank-you p
+{
+    font-size: 1.5rem;
+}
+#world
+{    
+    cursor: url('../cursor.webp'), auto;
+}
+footer
+{
+    font-size: 1.0rem;
+}
+footer a:hover
+{
+    color: teal;
+}
+.turnstile-container
+{
+    position:relative;
+    display: block;
+    margin: 1.0rem 0 0 0;
+}
+.turnstile-container .loading, .turnstile-container .error, .turnstile
+{
+    position: relative;
+}
+.turnstile-container .loading, .turnstile-container .error
+{
+    margin: 2rem 0 0 0;
+}

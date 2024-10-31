@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, user-scalable=no, maximum-scale=1, minimum-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>faces</title>
+    <meta name="description" content="memory sculpture by stephan e perez">
+
+    <meta property="og:url" content="https://somanyfaces.in">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="faces">
+    <meta property="og:description" content="memory sculpture by stephan e perez">
+    <meta property="og:image" content="https://somanyfaces.in/ogBanner.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="627">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="somanyfaces.in">
+    <meta property="twitter:url" content="https://somanyfaces.in">
+    <meta name="twitter:title" content="faces">
+    <meta name="twitter:description" content="memory sculpture by stephan e perez">
+    <meta name="twitter:image" content="https://somanyfaces.in/ogBanner.webp">
+    <link href="./src/reset.css" rel="stylesheet">
+    <link href="./src/style.css" rel="stylesheet">
+</head>
+<body>
+    <script src="./face-api.min.js"></script>
+    <script type="module" src="./src/face-detect.js"></script>
+    <script type="module" src="./src/mediaRecord.js"></script>
+    <script type="module" src="./src/pageManager.js"></script>
+    <script type="module" src="./src/world.js"></script>
+    <canvas id="world" class="js-world hidden"></canvas>
+    <div id="top" class="front-page-top js-top">
+        <div class="top-group">
+            <div class="title">
+                <h1>faces</h1>
+            </div>
+            <div class="main-menu">
+                <ul>
+                    <li><button class="top-become-a-face-but js-top-become-a-face-but">become a face</button></li>
+                    <li><button class="top-view-faces-but js-top-view-faces-but">view faces</button></li>
+                    <li><a href="#statement" class="top-statement-link">statement</a></li>
+                </ul>
+            </div>
+            <div class="sub-title">
+                <h2>memory sculpture by stephan e perez</h2>
+            </div>
+        </div>        
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        
+        <div id="statement" class="text page-padding">
+            <p>The first faces added to this are of friends, family, colleagues from various times in my life.</p>
+
+            <p>The next could be of you or anyone else reading this.</p>
+            
+            <p>Unlike a human's memory, you can choose whether to become part of it by touching <em>become a face</em> at the top of the page and recording your face and voice. Also unalike, you can simply observe by skipping to <em>view faces</em>.</p>
+            
+            <p>Like a human memory, it will continue to grow and diverge. Even people whom I've never met might record their face.  
+            When I die, it can persist and grow further... provided someone pays the server and domain costs.</p>
+            <br>
+            <br>
+            <h3>problems using the site?</h3>
+            <br>
+            <p>Use a stand-alone browser like safari, chrome or samsung internet. Make sure it's up-to-date.</p>
+        
+        </div>
+        <br>
+        <br>
+        <br>
+        <br>
+        <footer class="page-padding">© 2024 sep | <a href="https://selliotp.com">home page</a></footer>
+    </div>
+    <div class="input">        
+        <div id="permission" class="js-permission hidden page-padding">
+            <div class="text">
+                By pressing the agree button, you agree that your input image and voice data will become part of this artwork. They will not be used for any other purposes outside of the realization and documentation of this work.
+            </div>
+            <button class="back js-permission-back-but">back</button>
+            <button class="next js-permission-agree-but">agree</button>
+        </div>
+
+        <div id="photo-input" class="js-face-input hidden page-padding">
+            <p class="instructions text">Please take a picture of your face. It should be well lit and clearly visible. Avoid bright background lights. If multiple faces are detected, only the first will be used.</p>
+            <div class="select js-video-dev-sel">
+                <label for="video-source">video source: </label>
+                <select id="video-source"></select>
+            </div>                  
+            <button class="back js-photo-back-but">back</button>
+            <button class="take js-photo-take-but hidden">take photo</button>
+            <button class="take js-photo-retake-but hidden">retake</button>
+            <button class="next js-photo-confirm-but hidden">next</button>
+            <p class="js-photo-no-face-error error hidden">no face detected. please retake.</p>  
+            <div class="canvas-vid-container">
+                <div class="canvas-container js-canvas-container hidden">
+                    <canvas id="media-canvas" class=""></canvas>
+                    <canvas id="detect-canvas" class="hidden"></canvas>
+                    <canvas id="crop-canvas" class="js-crop-canvas" ></canvas>
+                </div>
+                <video class="hidden js-video-stream"></video>
+                <div class="hidden device-text error js-invalid-vid-dev-text">invalid device</div>
+                <div class="loading device-text hidden js-starting-vid-dev-text">starting device</div>
+                <div class="loading device-text hidden js-analyzing-photo-text">analyzing</div>                
+            </div>            
+        </div>
+        
+        <div id="voice-input" class="js-voice-input hidden page-padding">
+            <div class="select js-audio-dev-sel">
+                <p class="instructions text">Please say something into your microphone- maybe a greeting or how you're feeling right now. Pressing 'record' will record for 7 seconds.</p>
+                <label for="audio-source">audio source: </label>
+                <select id="audio-source"></select>
+            </div>
+            <canvas id="fft-canvas"></canvas>
+            <!-- <p><button class="" id="btn-db" onclick="saveDummyDataToDB()">save dummy data</button></p> -->
+            <audio class="js-audio-player hidden" src="" controls></audio>
+            <div class="hidden device-text invalid-device js-invalid-aud-dev-text">invalid device</div>
+            <div class="loading device-text hidden js-starting-aud-dev-text">starting device</div>
+            <div class="loading device-text hidden js-voice-recording-text">recording</div>
+            <button class="back js-voice-back-but">back</button>
+            <button class="take js-voice-play-but hidden">play</button>
+            <button class="take js-voice-stop-but hidden">stop</button>
+            <button class="take js-voice-rec-but hidden">record</button>
+            <button class="take js-voice-rerec-but hidden">rerecord</button>
+            <button class="next js-voice-confirm-but hidden">next</button>   
+            <div class="loading device-text hidden js-voice-saving-text">saving</div>  
+            <div class="error device-text hidden js-voice-error-text">could not save</div>             
+        </div>
+        <div id="controls" class="js-controls hidden page-padding">
+            <div id="thank-you" class="js-thank-you">
+                <p><em>thank you for contributing</em></p>
+            </div>
+            <h2>controls:</h2>
+            <ul>
+                <li>drag to rotate</li>
+                <li>scroll or pinch to move forwards / backwards</li>                
+                <li>headphones and fullscreen (f11 on windows) recommended</li>
+                <li>automatically moves when idle</li>
+            </ul>
+            <button class="back js-ty-top-but">top</button>
+            <button class="back js-ty-back-but">back</button>
+            <button class="next js-ty-view-but">view faces</button>
+        </div>
+    </div>    
+</body>
+</html>
