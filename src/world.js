@@ -354,8 +354,7 @@ function onClick(event)
         stopAutoMove();
         const intMesh = intersects[0].object;
         const face = activeFaces.find(af => af.mesh === intMesh);
-        console.log('Mesh touched:', face.data.imageUrl);
-        // You can add your custom logic here
+        //console.log('Mesh touched:', face.data.imageUrl);
     }
 }
 

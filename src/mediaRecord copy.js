@@ -1,3 +1,9 @@
+// add audio input/output selector too: https://github.com/webrtc/samples/blob/gh-pages/src/content/devices/input-output/js/main.js
+
+// https://developer.mozilla.org/en-US/docs/Web/API/Media_Capture_and_Streams_API/Taking_still_photos
+
+//(() =>
+//{
 const photoMaxH = 500;
 let photoW = 0;
 let photoH = 0;
@@ -8,7 +14,7 @@ let croppedCanvas;
 export const audioSelect = document.querySelector('select#audio-source');
 export let currentAudioDeviceId = null;
 export let currentVideoDeviceId = null;
-let fftCanvas, fftCanvasCtx, fftArray, fftBufferLength, fftAnalyzer;
+let audioCtx, fftCanvas, fftCanvasCtx, fftArray, fftBufferLength, fftAnalyzer;
 const fftWidth = 500;
 const fftHeight = 100;
 let voiceRecTimeout;
@@ -40,7 +46,7 @@ export function initializeDeviceChangeListener()
 
 export async function updateDeviceList() 
 {
-    console.log("getting device list...");    
+    //console.log("getting device list...");    
     const selectedVideoId = videoSelect.value;
     const selectedAudioId = audioSelect.value;  
 
@@ -50,7 +56,7 @@ export async function updateDeviceList()
     audioSelect.innerHTML = '';
     let videoFound = false;
     let audioFound = false;
-    console.log("devices?!", devices);
+
     devices.forEach(device => 
     {
         if (device.kind === 'videoinput') 
@@ -72,7 +78,7 @@ export async function updateDeviceList()
             const option = document.createElement('option');
             option.value = device.deviceId;
             option.text = device.label || `mic ${audioSelect.length + 1}`;
-            //console.log("audio label & id", option.text, option.value);
+            console.log("audio label & id", option.text, option.value);
             audioSelect.appendChild(option);
             if (device.deviceId === selectedAudioId) 
             {
@@ -149,28 +155,10 @@ export function abortStream()
 
 function gotAudioStream(stream)
 {
-    if (stream.getAudioTracks().length === 0) 
-    {
-        console.error("Audio stream acquired, but no audio tracks found.");
-        return;
-    }
-    try 
-    {
-        // Create the MediaRecorder only if the stream is active
-        if (stream.active) 
-        {
-            audioRecorder = new MediaRecorder(stream);
-            console.log("MediaRecorder successfully instantiated.");
-        } 
-        else 
-            {
-            console.error("Stream is not active, MediaRecorder creation skipped.");
-        }
-    } 
-    catch (e) 
-    {
-        console.error("Failed to instantiate MediaRecorder:", e);
-    }
+    console.log("got audio stream")
+    window.stream = stream;
+    audioRecorder = new MediaRecorder(stream);
+    //return navigator.mediaDevices.enumerateDevices();
 }
 
 async function normalizeAudio(b)
@@ -279,11 +267,10 @@ function handleErr(err)
     console.log(err.name, err.message);
 }
 
-export async function getMediaPermission()//isAlreadyGranted)
+export async function getMediaPermission(isAlreadyGranted)
 {
     // 1. Check current permission status non-intrusively
-    try 
-    {
+    try {
         const permissionStatus = await navigator.permissions.query({ name: 'camera' });
 
         if (permissionStatus.state === 'granted') 
@@ -297,9 +284,7 @@ export async function getMediaPermission()//isAlreadyGranted)
         //    console.error("Camera permission is denied by the user.");
             return false;
         }
-    } 
-    catch (e) 
-    {
+    } catch (e) {
         // Fallback for browsers that don't support the Permissions API for 'camera' (rare now)
         console.warn("Permissions API query failed, falling back to getUserMedia.");
     }
@@ -375,7 +360,7 @@ export async function startAudioStream()
     try
     {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
-        window.stream = stream;
+
         const audioTrack = stream.getAudioTracks()[0];
         currentAudioDeviceId = audioTrack.getSettings().deviceId;
         audioSelect.value = currentAudioDeviceId; 
@@ -392,29 +377,43 @@ export async function startAudioStream()
 
 export function startFft()
 {
-    if (fftSource) 
+    if (!audioCtx || audioCtx.state === 'closed') {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    console.log("audioCtx", audioCtx);
+    if (audioCtx.state === 'suspended') 
     {
-        try 
-        {
-            fftSource.disconnect();
-            fftAnalyzer.disconnect();
-        } catch (e) {
-            console.warn("Attempted to disconnect non-connected FFT nodes:", e);
-        }
-        // Nullify the global references
-        fftSource = null;
-        fftAnalyzer = null;
+        // Resume the context. This returns a promise.
+        audioCtx.resume().then(() => {
+            console.log("AudioContext resumed successfully. Proceeding with FFT setup.");
+            setupFftNodes();
+        }).catch(e => {
+            console.error("Error resuming AudioContext:", e);
+        });
+    } 
+    else if (audioCtx.state === 'running') 
+    {
+        // Already running (e.g., first time call)
+        setupFftNodes();
     }
-    if (fftAnimationId) {
-        cancelAnimationFrame(fftAnimationId);
-        fftAnimationId = null;
-    }
+}
 
-    const audioCtx = new AudioContext();
+function setupFftNodes() 
+{
+    // Check if nodes are already connected before re-connecting
+    if (fftSource) {
+        // Nodes already set up, just ensure animation is running
+        if (!fftAnimationId) drawFft();
+        return;
+    }
+    
+    // Check if window.stream has an audio track before creating the source
+    if (!window.stream || window.stream.getAudioTracks().length === 0) {
+        console.error("FFT failed: window.stream does not contain an audio track.");
+        return;
+    }
     fftAnalyzer = audioCtx.createAnalyser();
     fftSource = audioCtx.createMediaStreamSource(window.stream);
-    const audioTrack = window.stream.getAudioTracks()[0];
-    console.log("window.stream.GAT", audioTrack);
     fftSource.connect(fftAnalyzer);
     fftAnalyzer.fftSize = 2048;
     fftBufferLength = fftAnalyzer.frequencyBinCount;
@@ -458,8 +457,16 @@ function drawFft()
 export function stopFft() 
 {
     cancelAnimationFrame(fftAnimationId);
-    fftAnalyzer.disconnect();
-    fftSource.disconnect();
+    if (fftAnalyzer) fftAnalyzer.disconnect();
+    if (fftSource) fftSource.disconnect();
+    
+    if (audioCtx && audioCtx.state !== 'closed') {
+        // Do NOT close the context if you might need it again quickly. 
+        // Suspend is safer, but closing ensures a fresh start.
+        // For simplicity and to avoid the suspended state, let's close it.
+        audioCtx.close().catch(e => console.error("Error closing AudioContext:", e));
+    }
+    audioCtx = null;
     fftCanvasCtx.clearRect(0, 0, fftCanvas.width, fftCanvas.height);
     fftAnalyzer = null;
     fftSource = null;
@@ -510,33 +517,25 @@ function takePhoto()
     }
 }
 
+//videoSelect.onchange = startVideoStream;
+//audioSelect.onchange = startAudioStream;
+
 export const initFace = () =>
 {    
     initializeFaceApi();
+    //let voiceChunks = [];
+    
+    //photoButton.addEventListener()
 }
+
+//export const initVoice = () => startAudioStream;
 
 export const onVoiceRec = async () =>
 {
-    if(!window.stream || !audioRecorder)
+    if(!window.stream)
     {
-        console.error("Cannot record: Stream or audioRecorder is null/undefined.");
         return false;
     }
-
-    if (audioRecorder.state !== 'inactive') 
-    {
-        console.warn(`MediaRecorder state is '${audioRecorder.state}'. Stopping before restart.`);
-        try 
-        {
-            audioRecorder.stop();
-        } 
-        catch (e) 
-        {
-            console.error("Error stopping active recorder:", e);
-        }
-        // Give it a moment to transition states if needed, though usually onstop handles it.
-    }
-
     return new Promise((resolve) =>
     {    
         voiceChunks = [];
@@ -546,7 +545,15 @@ export const onVoiceRec = async () =>
             blob = new Blob(voiceChunks, { type: "audio/mp3" });
             blobUrl = URL.createObjectURL(blob);
             
-            resolve(blobUrl);
+            // if(e.data.size == 0)
+            // {
+            //     resolve(false);
+            // }
+            // else
+            //{
+                resolve(blobUrl);
+            //}
+            //document.querySelector("audio").src = blobUrl;
         }
         audioRecorder.ondataavailable = (e) => 
         {
@@ -600,6 +607,12 @@ export const onPhotoTake = async (e) =>
     // Redraw the saved content
     cc.drawImage(resizeCanvas, 0, 0, resizeCanvas.width, resizeCanvas.height, 0, 0, photoW, photoH);
     resizeCanvas.remove();
+    //videoElement.setAttribute("width", photoW);
+    //videoElement.setAttribute("height", photoH);
+    //canvasContainer.style.width = `${photoW}px`;
+    //canvasContainer.style.height = `${photoH}px`;
+
+    //saveCanvas(canv);
     return croppedCanvas;
 }
 

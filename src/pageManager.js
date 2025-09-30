@@ -20,12 +20,13 @@ const topViewWorldBut = document.querySelector('.js-top-view-faces-but');
 const permissionBackBut = document.querySelector('.js-permission-back-but');
 const permissionAgreeBut = document.querySelector('.js-permission-agree-but');
 //photo buttons-------------------
-const videoDevSel = document.querySelector('.js-video-dev-sel');
+//const videoDevSel = document.querySelector('.js-video-dev-sel');
 const invalidVidDevText = document.querySelector('.js-invalid-vid-dev-text');
 const startingVidDevText = document.querySelector('.js-starting-vid-dev-text');
 const analyzingPhotoText = document.querySelector('.js-analyzing-photo-text');
+const loadingModelsText = document.querySelector('.js-loading-models-text');;
 const photoNoFaceError = document.querySelector('.js-photo-no-face-error');
-const photoTexts = [invalidVidDevText, startingVidDevText, analyzingPhotoText, photoNoFaceError];
+const photoTexts = [invalidVidDevText, startingVidDevText, analyzingPhotoText, loadingModelsText, photoNoFaceError];
 const photoTakeBut = document.querySelector('.js-photo-take-but');
 const photoRetakeBut = document.querySelector('.js-photo-retake-but');
 const photoBackBut = document.querySelector('.js-photo-back-but');
@@ -39,7 +40,7 @@ const savingText = document.querySelector('.js-voice-saving-text');
 const voiceRecText = document.querySelector('.js-voice-recording-text');
 const saveErrorText = document.querySelector('.js-voice-error-text');
 const voiceTexts = [invalidAudDevText, startingAudDevText, savingText, voiceRecText, saveErrorText];
-const audioDevSel = document.querySelector('.js-audio-dev-sel');
+//const audioDevSel = document.querySelector('.js-audio-dev-sel');
 const voiceRecBut = document.querySelector('.js-voice-rec-but');
 const voiceBackBut = document.querySelector('.js-voice-back-but');
 const voicePlayBut = document.querySelector('.js-voice-play-but');
@@ -48,7 +49,7 @@ const voiceConfirmBut = document.querySelector('.js-voice-confirm-but');
 const voiceRerecBut = document.querySelector('.js-voice-rerec-but');
 const voiceButs = [voiceRecBut, voiceBackBut, voiceConfirmBut, voiceRerecBut, voicePlayBut, voiceStopBut];
 const audioPlayer = document.querySelector('.js-audio-player');
-let audioUrl;
+let audioUrl, isFirstTime = true;
 
 //control buttons/texts------------------
 const controlViewBut = document.querySelector('.js-ty-view-but');
@@ -65,11 +66,11 @@ let isFirstVoiceRecording = true;
 let vidDevCheckPromIdA = 0;
 let audDevCheckPromIdA = 0;
 
-let mediaPermissionGranted = false;
-
 import { initFace, startAudioStream, onPhotoTake, onVoiceRec, getMediaPermission,
     startVideoStream, startFft, stopFft, updateDeviceList, stopStream, abortStream, saveData,
-     deleteData} from "./mediaRecord.js";
+    deleteData, initializeDeviceChangeListener, currentAudioDeviceId, currentVideoDeviceId,
+    videoSelect, audioSelect } 
+     from "./mediaRecord.js";
 import { initWorld } from "./world.js";
 import { modelsLoaded } from "./face-detect.js";
 
@@ -108,7 +109,6 @@ topBecomeFaceBut.addEventListener('click', () =>
     location.hash = ""; //to erase the #statement hash that might be present
     history.replaceState("", "", location.pathname);
     radioToggle(pageParts, pagePermission);   
-    initFace();
 });
 
 topViewWorldBut.addEventListener('click', () =>
@@ -140,7 +140,7 @@ permissionAgreeBut.addEventListener('click', () =>
     radioToggle(photoButs, photoBackBut);
     radioToggle(photoTexts, startingVidDevText);
     radioToggle(streamElements);
-
+    initFace();
     startCamera();    
 });
 
@@ -148,32 +148,32 @@ async function startCamera()
 {
     vidDevCheckPromIdA++;
     const vidDevCheckPromIdB = vidDevCheckPromIdA;
-    // console.log("devSel->getPerm->startVid", vidDevCheckPromIdB);
-    const isFirstTime = !mediaPermissionGranted;
+    // const isFirstTime = !mediaPermissionGranted;
     await stopStream();
-    mediaPermissionGranted = await getMediaPermission(mediaPermissionGranted);
+    const mediaPermissionGranted = await getMediaPermission();
+    console.log("permission?", mediaPermissionGranted);
     if(mediaPermissionGranted && isFirstTime)
     {
-        console.log("updating devices");
         await updateDeviceList();
+        initializeDeviceChangeListener();
+        isFirstTime = false;
     }
     else if(!mediaPermissionGranted)
     {
-        console.log("permission not granted!");
-        invalidVidDevText.classList.toggle("hidden", false);
+        radioToggle(photoTexts, invalidVidDevText);
         return false;
     }
 
     await stopStream(); 
     const streamOn = await startVideoStream();
+    await updateDeviceList();
     
-    //console.log("afterStart, isVidStreamOn:", streamOn, vidDevCheckPromIdB);
     if(vidDevCheckPromIdA != vidDevCheckPromIdB)
     {
-        console.log("vidDev load overridden", vidDevCheckPromIdB, vidDevCheckPromIdA);
         return;
     }
-    startingVidDevText.classList.toggle("hidden", true);
+    
+    radioToggle(photoTexts, startingVidDevText);
     isVidStreamOn = streamOn;        
 
     if(isVidStreamOn)
@@ -183,22 +183,30 @@ async function startCamera()
     }
     else
     {
-        invalidVidDevText.classList.toggle("hidden", false);
+        radioToggle(photoTexts, invalidVidDevText);
     }
 }
 
 function spawnTakeButton()
 {    
+    radioToggle(photoTexts, loadingModelsText);
     if(modelsLoaded)
     {
-        radioToggle(photoButs, [photoTakeBut, photoBackBut]);
+        radioToggle(photoButs, [photoTakeBut, photoBackBut]);        
+        radioToggle(photoTexts);
         return;
     }
-    setTimeout(spawnTakeButton, 500);
+    setTimeout(spawnTakeButton, 300);
 }
 
-videoDevSel.addEventListener('change', (e) =>
-{
+videoSelect.addEventListener('change', (e) =>
+{   
+    const videoSource = videoSelect.value;
+
+    if(videoSource === currentVideoDeviceId)
+    {
+        return;
+    }
     radioToggle(photoTexts, startingVidDevText);
     photoTakeBut.classList.toggle("hidden", true);
     vidStream.classList.toggle("hidden", true);    
@@ -207,7 +215,7 @@ videoDevSel.addEventListener('change', (e) =>
 
 photoTakeBut.addEventListener('click', (e) =>
 {   
-    videoDevSel.classList.toggle('hidden', true);
+    videoSelect.classList.toggle('hidden', true);
     radioToggle(photoButs);
     isPhotoTaken = false;
     croppedCanvas.classList.toggle('centered', false);
@@ -229,7 +237,7 @@ photoTakeBut.addEventListener('click', (e) =>
             radioToggle(photoButs, [photoBackBut, photoTakeBut]);
             radioToggle(photoTexts, photoNoFaceError);
             radioToggle(streamElements, vidStream);
-            videoDevSel.classList.toggle('hidden', false);
+            videoSelect.classList.toggle('hidden', false);
         }
     });
 });
@@ -238,7 +246,7 @@ photoRetakeBut.addEventListener('click', () =>
 {
     isPhotoTaken = false;
     radioToggle(streamElements, vidStream);
-    videoDevSel.classList.toggle('hidden', false);
+    videoSelect.classList.toggle('hidden', false);
     
     if(isVidStreamOn)
     {
@@ -283,8 +291,15 @@ photoConfirmBut.addEventListener('click', () =>
     startMic();    
 });
 
-audioDevSel.addEventListener('change', () =>
+audioSelect.addEventListener('change', () =>
 {
+    const audioSource = audioSelect.value;
+
+    if(audioSource === currentAudioDeviceId)
+    {
+        console.log("IDs identical. Do not start Mic.");
+        return;
+    }
     radioToggle(voiceTexts, startingAudDevText);    
     const recBut = isFirstVoiceRecording ? voiceRecBut : voiceRerecBut;
     recBut.classList.toggle("hidden", true);
@@ -296,17 +311,18 @@ async function startMic()
     audDevCheckPromIdA++;
     const audDevCheckPromIdB = audDevCheckPromIdA;
     await stopStream();
+    await getMediaPermission();
     const streamOn = await startAudioStream();
-    console.log("afterStart, isAudStreamOn:", streamOn, audDevCheckPromIdB);
+    await updateDeviceList();
     if(audDevCheckPromIdA != audDevCheckPromIdB)
     {
-        console.log("audDev load overridden", audDevCheckPromIdB, audDevCheckPromIdA);
         return;
     }
     startingAudDevText.classList.toggle("hidden", true);
     isAudStreamOn = streamOn;
     if(isAudStreamOn)
     {
+        console.log("audStreamOn. starting Fft...");
         isAudStreamOn = true;
         voiceRecBut.classList.toggle('hidden', false);
         radioToggle(voiceTexts);
@@ -323,7 +339,7 @@ function recordAudio()
     radioToggle(voiceButs);
     radioToggle(voiceTexts, voiceRecText);
     isVoiceRecorded = false;    
-    audioDevSel.classList.toggle('hidden', true);
+    audioSelect.classList.toggle('hidden', true);
     audioPlayer.classList.toggle('hidden', true);
     audioPlayer.pause();
     audioPlayer.currentTime = 0;
@@ -333,13 +349,13 @@ function recordAudio()
         {
             audioUrl = validRecording;
             isVoiceRecorded = true;
-            audioDevSel.classList.toggle('hidden', false);
+            audioSelect.classList.toggle('hidden', false);
             radioToggle(voiceButs, [voiceRerecBut, voiceBackBut, voicePlayBut, voiceConfirmBut]);
             radioToggle(voiceTexts);
         }
         else
         {
-            audioDevSel.classList.toggle('hidden', false);
+            audioSelect.classList.toggle('hidden', false);
             radioToggle(voiceTexts, invalidAudDevText);
             radioToggle(voiceButs, [voiceRerecBut, voiceBackBut]);
         }
@@ -399,7 +415,7 @@ voiceConfirmBut.addEventListener('click', () =>
 {   
     radioToggle(voiceTexts, savingText);
     radioToggle(voiceButs);      
-    audioDevSel.classList.toggle('hidden', true);
+    audioSelect.classList.toggle('hidden', true);
     stopFft();
     audioPlayer.pause();
     audioPlayer.currentTime = 0;
@@ -420,7 +436,7 @@ voiceConfirmBut.addEventListener('click', () =>
         console.log(error);
         radioToggle(voiceTexts, saveErrorText);
         radioToggle(voiceButs, [voiceBackBut, voicePlayBut, voiceConfirmBut, voiceRerecBut]);
-        audioDevSel.classList.toggle('hidden', false);
+        audioSelect.classList.toggle('hidden', false);
         startFft();
     });
 });
@@ -438,3 +454,4 @@ controlViewBut.addEventListener('click', () =>
     radioToggle(pageParts, pageWorld);
     initWorld();
 });
+

@@ -26,8 +26,14 @@
     <meta name="twitter:image" content="https://somanyfaces.in/ogBanner.webp">
     <link href="./src/reset.css" rel="stylesheet">
     <link href="./src/style.css" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+<link rel="manifest" href="/favicon/site.webmanifest">
 </head>
 <body>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script> -->
     <script src="./face-api.min.js"></script>
     <script type="module" src="./src/face-detect.js"></script>
     <script type="module" src="./src/mediaRecord.js"></script>
@@ -79,7 +85,7 @@
         <br>
         <br>
         <br>
-        <footer class="page-padding">© 2024 sep | <a href="https://selliotp.com">home page</a></footer>
+        <footer class="page-padding">© 2024 sep | <a href="https://stephaneperez.net">home page</a></footer>
     </div>
     <div class="input">        
         <div id="permission" class="js-permission hidden page-padding">
@@ -97,7 +103,8 @@
                 <select id="video-source"></select>
             </div>                  
             <button class="back js-photo-back-but">back</button>
-            <button class="take js-photo-take-but hidden">take photo</button>
+            <button class="take js-photo-take-but hidden">take photo</button>            
+            <span class="loading device-text span-text hidden js-loading-models-text">loading face detector- may take a while</span>      
             <button class="take js-photo-retake-but hidden">retake</button>
             <button class="next js-photo-confirm-but hidden">next</button>
             <p class="js-photo-no-face-error error hidden">no face detected. please retake.</p>  
@@ -110,7 +117,7 @@
                 <video class="hidden js-video-stream"></video>
                 <div class="hidden device-text error js-invalid-vid-dev-text">invalid device</div>
                 <div class="loading device-text hidden js-starting-vid-dev-text">starting device</div>
-                <div class="loading device-text hidden js-analyzing-photo-text">analyzing</div>                
+                <div class="loading device-text hidden js-analyzing-photo-text">analyzing</div>      
             </div>            
         </div>
         

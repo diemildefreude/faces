@@ -134,6 +134,12 @@ audio
     left:50%;
     transform: translate(-50%, -50%);
 }
+.device-text.span-text
+{
+    position: relative;
+    top:0;
+    left: 0;
+}
 #voice-input .device-text
 {
     position: relative;
