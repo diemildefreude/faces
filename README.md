@@ -11,6 +11,8 @@ prerequisites
 
 -three.js (via npm)
 
+-yomotsu cameraControls (via npm)
+
 -face-api.js (included in repo)
 
 -php 8.2+
