@@ -1,0 +1,54 @@
+services:
+  web:
+    build: .
+    container_name: faces-web-1
+    volumes:
+      - ./dist/img:/var/www/html/dist/img
+      - ./dist/audio:/var/www/html/dist/audio
+      - ./justImg:/var/www/html/justImg
+      - ./dist/justImg:/var/www/html/dist/justImg
+    environment:
+      - DB_HOST=db
+      - DB_USER=${DB_USER:-root}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME:-faces_db}
+      - DB_PORT=3306
+    depends_on:
+      - db
+    networks:
+      - npm_default
+      - default
+
+  db:
+    image: mysql:8.0
+    container_name: faces-db-1
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASS}
+      - MYSQL_DATABASE=${DB_NAME:-faces_db}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./faces.sql:/docker-entrypoint-initdb.d/faces.sql
+    networks:
+      - default
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: faces-phpmyadmin-1
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=root
+      - PMA_PASSWORD=${DB_PASS}
+    depends_on:
+      - db
+    networks:
+      - npm_default
+      - default
+
+networks:
+  npm_default:
+    external: true
+
+volumes:
+  db_data:

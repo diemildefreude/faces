@@ -6,11 +6,11 @@ header('Access-Control-Allow-Headers: Content-Type'); // Allow certain headers
 //change this after development
 
 $path = dirname(__DIR__);
-$serverName = "localhost";
-$userName = "root";
-$password = "";
-$database = "faces_db";
-$port = "3306";
+$serverName = getenv('DB_HOST') ?: "localhost";
+$userName = getenv('DB_USER') ?: "root";
+$password = getenv('DB_PASS') ?: "";
+$database = getenv('DB_NAME') ?: "faces_db";
+$port = getenv('DB_PORT') ?: "3306";
 $tableName = "faces";
 
 class FaceData
@@ -35,6 +35,9 @@ function saveImage()
     if (!file_exists($path . "/img")) {
         mkdir($path . "/img", 0777, true);
     }
+    if (!file_exists(__DIR__ . "/img")) {
+        mkdir(__DIR__ . "/img", 0777, true);
+    }
     
     $file_name = "./img/" . time() . '.webp';
     //$file_name = "../img/" . time() . '.webp'; for npm run dev
@@ -56,6 +59,9 @@ function saveAudio()
     if (!file_exists($path . "/audio")) 
     {
         mkdir($path . "/audio", 0777, true);
+    }
+    if (!file_exists(__DIR__ . "/audio")) {
+        mkdir(__DIR__ . "/audio", 0777, true);
     }
     $file_name = "./audio/" . time() . ".mp3";
     //$file_name = "../audio/" . time() . ".mp3"; //for dev mode (npm run dev)
