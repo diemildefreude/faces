@@ -40,7 +40,7 @@ export function initializeDeviceChangeListener()
 
 export async function updateDeviceList() 
 {
-    console.log("getting device list...");    
+    //console.log("getting device list...");    
     const selectedVideoId = videoSelect.value;
     const selectedAudioId = audioSelect.value;  
 
@@ -50,7 +50,7 @@ export async function updateDeviceList()
     audioSelect.innerHTML = '';
     let videoFound = false;
     let audioFound = false;
-    console.log("devices?!", devices);
+    //console.log("devices?!", devices);
     devices.forEach(device => 
     {
         if (device.kind === 'videoinput') 
@@ -94,12 +94,12 @@ export async function updateDeviceList()
 
     if (!videoFound && selectedVideoId !== videoSelect.value) 
     {
-        console.log("dispatching change event");
+        //console.log("dispatching change event");
         videoSelect.dispatchEvent(new Event('change'));
     }
     if (!audioFound && selectedAudioId !== audioSelect.value) 
     {
-        console.log("dispatching change event");
+        //console.log("dispatching change event");
         audioSelect.dispatchEvent(new Event('change'));
     }
 }
@@ -111,7 +111,7 @@ function gotVideoStream(stream)
     if(!isStreamOn) //can be false if abortStream() called
     {
         stopStream();
-        console.log('abort stream');
+        //console.log('abort stream');
         return;//navigator.mediaDevices.enumerateDevices();
     }
 
@@ -138,7 +138,7 @@ function gotVideoStream(stream)
     {   
         isMirroredCam = true;
     }
-    console.log("isMirrored", isMirroredCam);
+    //console.log("isMirrored", isMirroredCam);
     videoElement.classList.toggle('mirrored', isMirroredCam);
 }
 
@@ -160,7 +160,7 @@ function gotAudioStream(stream)
         if (stream.active) 
         {
             audioRecorder = new MediaRecorder(stream);
-            console.log("MediaRecorder successfully instantiated.");
+            //console.log("MediaRecorder successfully instantiated.");
         } 
         else 
             {
@@ -195,7 +195,7 @@ async function normalizeAudio(b)
 
         // Normalize the audio
         let normalizationFactor = max != 0 ? 1 / max : 1;
-        console.log("normalization factor", normalizationFactor)
+        //console.log("normalization factor", normalizationFactor)
         gainNode.gain.value = Math.min(4.0, normalizationFactor);
 
         // Create a mute gain node
@@ -276,7 +276,7 @@ function dataURLtoBlob(dataURL)
 
 function handleErr(err)
 {
-    console.log(err.name, err.message);
+    //console.log(err.name, err.message);
 }
 
 export async function getMediaPermission()//isAlreadyGranted)
@@ -365,7 +365,7 @@ export async function startVideoStream()
 export async function startAudioStream()
 {
     isStreamOn = true;
-    console.log("starting audio stream");    
+    //console.log("starting audio stream");    
     const audioSource = audioSelect.value;
     const constraints =
     {
@@ -379,7 +379,7 @@ export async function startAudioStream()
         const audioTrack = stream.getAudioTracks()[0];
         currentAudioDeviceId = audioTrack.getSettings().deviceId;
         audioSelect.value = currentAudioDeviceId; 
-        console.log("track settings, stream info", audioTrack.getSettings(), stream);
+        //console.log("track settings, stream info", audioTrack.getSettings(), stream);
         gotAudioStream(stream);
         return true;
     }     
@@ -414,7 +414,7 @@ export function startFft()
     fftAnalyzer = audioCtx.createAnalyser();
     fftSource = audioCtx.createMediaStreamSource(window.stream);
     const audioTrack = window.stream.getAudioTracks()[0];
-    console.log("window.stream.GAT", audioTrack);
+    //console.log("window.stream.GAT", audioTrack);
     fftSource.connect(fftAnalyzer);
     fftAnalyzer.fftSize = 2048;
     fftBufferLength = fftAnalyzer.frequencyBinCount;
@@ -473,8 +473,12 @@ export async function stopStream()
         window.stream.getTracks().forEach(track =>
         {
             track.stop();    
-            console.log("stopping Stream");
+            //console.log("stopping Stream");
         });
+        if (videoElement.srcObject === window.stream || videoElement.srcObject !== null) {
+            videoElement.srcObject = null;
+        }
+        videoElement.src = "";
         window.stream = null;
         currentAudioDeviceId = null;
         currentVideoDeviceId = null;

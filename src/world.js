@@ -140,7 +140,7 @@ class Face
         const v = this.#alpha * this.#volFade * this.#inOutFade;
         if(v > 1.0)
         {
-            console.log("TOO LOUD", v);
+            //console.log("TOO LOUD", v);
         }
         this.sound.setVolume(Math.pow(v, 2));
 
@@ -423,7 +423,7 @@ function addPhotoBatchToDB()
         method: "POST",
         body: formData
     }).then(response => response.json())
-    .then(data => console.log(data));
+    .then(data => {}/*console.log(data)*/);
 }
 
 export async function initWorld()
@@ -801,7 +801,7 @@ function loadTexture(imageUrl)
 {
     return new Promise((resolve, reject) => 
     {
-        texLoad.load(imageUrl, resolve, undefined, () => { console.log("error loading texture"); reject()});
+        texLoad.load(imageUrl, resolve, undefined, () => { /*console.log("error loading texture");*/ reject()});
     });
 }
 
@@ -961,7 +961,7 @@ function getFacesData()
             const faceArr = data.map(fd => new FaceData(fd.id, fd.imageUrl, fd.audioUrl));
             resolve(faceArr);           
         })
-        .catch(error => console.log(error));   
+        .catch(error => {}/*console.log(error)*/);   
     });
 }
 
@@ -989,7 +989,7 @@ function checkForDBChange()
             if(activeFaces.length < maxFaces)
             {
                 makeFace(nf, true);
-                console.log("new face loaded");
+                //console.log("new face loaded");
             }
         }
         setTimeout(checkForDBChange, pollingIntervalDur);

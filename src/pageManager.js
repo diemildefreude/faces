@@ -151,7 +151,7 @@ async function startCamera()
     // const isFirstTime = !mediaPermissionGranted;
     await stopStream();
     const mediaPermissionGranted = await getMediaPermission();
-    console.log("permission?", mediaPermissionGranted);
+    //console.log("permission?", mediaPermissionGranted);
     if(mediaPermissionGranted && isFirstTime)
     {
         await updateDeviceList();
@@ -242,7 +242,7 @@ photoTakeBut.addEventListener('click', (e) =>
     });
 });
 
-photoRetakeBut.addEventListener('click', () =>
+photoRetakeBut.addEventListener('click', async () =>
 {
     isPhotoTaken = false;
     radioToggle(streamElements, vidStream);
@@ -259,6 +259,7 @@ photoRetakeBut.addEventListener('click', () =>
 
     const vidDevCheckPromIdB = vidDevCheckPromIdA;
 
+    await stopStream(); // Prevent stream leaks if coming from voice page
     startVideoStream().then((streamOn) =>
     {
         if(vidDevCheckPromIdA != vidDevCheckPromIdB)
@@ -297,7 +298,7 @@ audioSelect.addEventListener('change', () =>
 
     if(audioSource === currentAudioDeviceId)
     {
-        console.log("IDs identical. Do not start Mic.");
+        //console.log("IDs identical. Do not start Mic.");
         return;
     }
     radioToggle(voiceTexts, startingAudDevText);    
@@ -322,7 +323,7 @@ async function startMic()
     isAudStreamOn = streamOn;
     if(isAudStreamOn)
     {
-        console.log("audStreamOn. starting Fft...");
+        //console.log("audStreamOn. starting Fft...");
         isAudStreamOn = true;
         voiceRecBut.classList.toggle('hidden', false);
         radioToggle(voiceTexts);
@@ -368,13 +369,14 @@ voiceRecBut.addEventListener('click', () =>
     recordAudio();
 });
 
-voiceRerecBut.addEventListener('click', (e) =>
+voiceRerecBut.addEventListener('click', async (e) =>
 {
     radioToggle(voiceTexts);
     if(isVidStreamOn || !isAudStreamOn)
     {
         isVidStreamOn = false;
         isAudStreamOn = true;
+        await stopStream();
         startAudioStream().then(recordAudio);
         return;
     }
@@ -433,7 +435,7 @@ voiceConfirmBut.addEventListener('click', () =>
     })
     .catch((error) => 
     {
-        console.log(error);
+        //console.log(error);
         radioToggle(voiceTexts, saveErrorText);
         radioToggle(voiceButs, [voiceBackBut, voicePlayBut, voiceConfirmBut, voiceRerecBut]);
         audioSelect.classList.toggle('hidden', false);
