@@ -11,10 +11,7 @@ export const initializeFaceApi = async() =>
 {
     //console.log(faceapi.nets.ssdMobilenetv1);
     await Promise.all([
-        faceapi.nets.ssdMobilenetv1.loadFromUri('./faceModels'), //facial detection 
-        faceapi.nets.faceLandmark68Net.loadFromUri('./faceModels'), 
-        faceapi.nets.faceRecognitionNet.loadFromUri('./faceModels'),
-        faceapi.nets.ageGenderNet.loadFromUri('./faceModels'),
+        faceapi.nets.ssdMobilenetv1.loadFromUri('./faceModels') //facial detection 
     ]);
     modelsLoaded = true;
 };
@@ -28,15 +25,13 @@ export const runDetection = async(data, mediaCanvas)=>
         return;
     }  
     const detectImage = await faceapi.fetchImage(data);
-    let faceAIData = await faceapi.detectAllFaces(detectImage/*, new faceapi.TinyFaceDetectorOptions()*/)
-        .withFaceLandmarks()
-        .withFaceDescriptors()
-        .withAgeAndGender();
+    let faceAIData = await faceapi.detectAllFaces(detectImage/*, new faceapi.TinyFaceDetectorOptions()*/);
+        
     if(faceAIData.length == 0)
     {
         return false;
     }
-    const faceRect = faceAIData[0].detection.box;
+    const faceRect = faceAIData[0].box;
 
     //faceAIData = faceapi.resizeResults(faceAIData, detectImage);
     const detectCanvas = document.getElementById('detect-canvas');    
