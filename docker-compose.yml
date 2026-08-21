@@ -38,8 +38,6 @@ services:
     container_name: faces-phpmyadmin-1
     environment:
       - PMA_HOST=db
-      - PMA_USER=root
-      - PMA_PASSWORD=${DB_PASS}
     depends_on:
       - db
     networks:
