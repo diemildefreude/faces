@@ -2,6 +2,7 @@ services:
   web:
     build: .
     container_name: faces-web-1
+    command: bash -c "chown -R www-data:www-data /var/www/html/dist/img /var/www/html/dist/audio /var/www/html/justImg /var/www/html/dist/justImg && apache2-foreground"
     volumes:
       - ./dist/img:/var/www/html/dist/img
       - ./dist/audio:/var/www/html/dist/audio

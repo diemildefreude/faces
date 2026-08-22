@@ -330,18 +330,22 @@ export async function getMediaPermission()//isAlreadyGranted)
     }
 }
 
-export async function startVideoStream()
+export async function startMediaStream()
 {     
-    //console.log("starting stream");
     isStreamOn = true;
     const videoSourceId = videoSelect.value;
+    const audioSourceId = audioSelect.value;
     const constraints = 
     {
         video: 
         { 
             deviceId: videoSourceId ? {exact: videoSourceId} : undefined,
-            width: {min: 640, ideal: 1920, max: 1920}, //OR width: 1280, height 720
+            width: {min: 640, ideal: 1920, max: 1920}, 
             height: {min: 480, ideal: 1080, max: 1920}
+        },
+        audio: 
+        {
+            deviceId: audioSourceId ? {exact: audioSourceId} : undefined
         }
     };
     let stream;
@@ -350,44 +354,42 @@ export async function startVideoStream()
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         
         const videoTrack = stream.getVideoTracks()[0];
-        currentVideoDeviceId = videoTrack.getSettings().deviceId; 
-        videoSelect.value = currentVideoDeviceId; 
+        if (videoTrack) {
+            currentVideoDeviceId = videoTrack.getSettings().deviceId; 
+            videoSelect.value = currentVideoDeviceId; 
+        }
+
+        const audioTrack = stream.getAudioTracks()[0];
+        if (audioTrack) {
+            currentAudioDeviceId = audioTrack.getSettings().deviceId;
+            audioSelect.value = currentAudioDeviceId; 
+        }
         
         gotVideoStream(stream);
+        gotAudioStream(stream);
         return true;
     } 
     catch (error) 
     {
-        console.error('Error starting video stream:', error);
+        console.error('Error starting media stream:', error);
         return false;
     }
 }
-export async function startAudioStream()
-{
-    isStreamOn = true;
-    //console.log("starting audio stream");    
-    const audioSource = audioSelect.value;
-    const constraints =
-    {
-        audio: {deviceId: audioSource ? {exact: audioSource} : undefined},
+
+let fftAudioCtx;
+
+export function initFftAudioCtx() {
+    if (fftAudioCtx) {
+        fftAudioCtx.close();
     }
-    let stream;
-    try
-    {
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-        window.stream = stream;
-        const audioTrack = stream.getAudioTracks()[0];
-        currentAudioDeviceId = audioTrack.getSettings().deviceId;
-        audioSelect.value = currentAudioDeviceId; 
-        //console.log("track settings, stream info", audioTrack.getSettings(), stream);
-        gotAudioStream(stream);
-        return true;
-    }     
-    catch(error)
-    {
-        console.error('Error starting audio stream:', error);
-        return false;
-    } 
+    fftAudioCtx = new AudioContext();
+}
+
+export function destroyFftAudioCtx() {
+    if (fftAudioCtx) {
+        fftAudioCtx.close();
+        fftAudioCtx = null;
+    }
 }
 
 export function startFft()
@@ -409,10 +411,9 @@ export function startFft()
         cancelAnimationFrame(fftAnimationId);
         fftAnimationId = null;
     }
-
-    const audioCtx = new AudioContext();
-    fftAnalyzer = audioCtx.createAnalyser();
-    fftSource = audioCtx.createMediaStreamSource(window.stream);
+    
+    fftAnalyzer = fftAudioCtx.createAnalyser();
+    fftSource = fftAudioCtx.createMediaStreamSource(window.stream);
     const audioTrack = window.stream.getAudioTracks()[0];
     //console.log("window.stream.GAT", audioTrack);
     fftSource.connect(fftAnalyzer);
@@ -457,10 +458,18 @@ function drawFft()
 
 export function stopFft() 
 {
-    cancelAnimationFrame(fftAnimationId);
-    fftAnalyzer.disconnect();
-    fftSource.disconnect();
-    fftCanvasCtx.clearRect(0, 0, fftCanvas.width, fftCanvas.height);
+    if (fftAnimationId) {
+        cancelAnimationFrame(fftAnimationId);
+    }
+    if (fftAnalyzer) {
+        fftAnalyzer.disconnect();
+    }
+    if (fftSource) {
+        fftSource.disconnect();
+    }
+    if (fftCanvasCtx && fftCanvas) {
+        fftCanvasCtx.clearRect(0, 0, fftCanvas.width, fftCanvas.height);
+    }
     fftAnalyzer = null;
     fftSource = null;
     fftAnimationId = null;

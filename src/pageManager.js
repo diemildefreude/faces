@@ -66,10 +66,10 @@ let isFirstVoiceRecording = true;
 let vidDevCheckPromIdA = 0;
 let audDevCheckPromIdA = 0;
 
-import { initFace, startAudioStream, onPhotoTake, onVoiceRec, getMediaPermission,
-    startVideoStream, startFft, stopFft, updateDeviceList, stopStream, abortStream, saveData,
+import { initFace, startMediaStream, onPhotoTake, onVoiceRec, getMediaPermission,
+    startFft, stopFft, updateDeviceList, stopStream, abortStream, saveData,
     deleteData, initializeDeviceChangeListener, currentAudioDeviceId, currentVideoDeviceId,
-    videoSelect, audioSelect } 
+    videoSelect, audioSelect, initFftAudioCtx, destroyFftAudioCtx } 
      from "./mediaRecord.js";
 import { initWorld } from "./world.js";
 import { modelsLoaded } from "./face-detect.js";
@@ -125,6 +125,7 @@ permissionBackBut.addEventListener('click', () =>
 {
     stopStream();
     abortStream();
+    destroyFftAudioCtx();
     radioToggle(pageParts, pageTop);
 });
 
@@ -132,15 +133,18 @@ permissionAgreeBut.addEventListener('click', () =>
 {
     radioToggle(pageParts, pageFaceInput);
     
-    if(isPhotoTaken || isVidStreamOn) //keep previous state of pageFace
+    if(isVidStreamOn) //keep previous state of pageFace
     {
         return;
     }
       
-    radioToggle(photoButs, photoBackBut);
-    radioToggle(photoTexts, startingVidDevText);
-    radioToggle(streamElements);
-    initFace();
+    if(!isPhotoTaken) {
+        radioToggle(photoButs, photoBackBut);
+        radioToggle(photoTexts, startingVidDevText);
+        radioToggle(streamElements);
+        initFace();
+    }
+    
     startCamera();    
 });
 
@@ -148,24 +152,22 @@ async function startCamera()
 {
     vidDevCheckPromIdA++;
     const vidDevCheckPromIdB = vidDevCheckPromIdA;
-    // const isFirstTime = !mediaPermissionGranted;
-    await stopStream();
-    const mediaPermissionGranted = await getMediaPermission();
-    //console.log("permission?", mediaPermissionGranted);
-    if(mediaPermissionGranted && isFirstTime)
+    await stopStream(); 
+    
+    const streamOn = await startMediaStream();
+    
+    if(streamOn && isFirstTime)
     {
         await updateDeviceList();
         initializeDeviceChangeListener();
         isFirstTime = false;
     }
-    else if(!mediaPermissionGranted)
+    else if(!streamOn && isFirstTime)
     {
         radioToggle(photoTexts, invalidVidDevText);
         return false;
     }
 
-    await stopStream(); 
-    const streamOn = await startVideoStream();
     await updateDeviceList();
     
     if(vidDevCheckPromIdA != vidDevCheckPromIdB)
@@ -173,17 +175,22 @@ async function startCamera()
         return;
     }
     
-    radioToggle(photoTexts, startingVidDevText);
     isVidStreamOn = streamOn;        
+    isAudStreamOn = streamOn;
 
     if(isVidStreamOn)
     {
-        vidStream.classList.toggle("hidden", false);
-        spawnTakeButton();
+        if(!isPhotoTaken) {
+            radioToggle(photoTexts, startingVidDevText);
+            vidStream.classList.toggle("hidden", false);
+            spawnTakeButton();
+        }
     }
     else
     {
-        radioToggle(photoTexts, invalidVidDevText);
+        if(!isPhotoTaken) {
+            radioToggle(photoTexts, invalidVidDevText);
+        }
     }
 }
 
@@ -254,42 +261,35 @@ photoRetakeBut.addEventListener('click', async () =>
         return;
     }
 
-    isAudStreamOn = false;
-    radioToggle(photoButs, photoBackBut);vidDevCheckPromIdA++;
-
-    const vidDevCheckPromIdB = vidDevCheckPromIdA;
-
-    await stopStream(); // Prevent stream leaks if coming from voice page
-    startVideoStream().then((streamOn) =>
-    {
-        if(vidDevCheckPromIdA != vidDevCheckPromIdB)
-        {
-            return;
-        }
-        if(streamOn)
-        {
-            isVidStreamOn = true;
-            radioToggle(photoButs, [photoBackBut, photoTakeBut])
-        }
-    });
+    radioToggle(photoButs, photoBackBut);
+    startCamera();
 });
 
 photoBackBut.addEventListener('click', () =>
 {
+    stopStream();
+    isVidStreamOn = false;
+    isAudStreamOn = false;
     radioToggle(pageParts, pagePermission);
 });
 
 photoConfirmBut.addEventListener('click', () =>
 {
     radioToggle(pageParts, pageVoiceInput);
+    
+    initFftAudioCtx();
+    startFft();
+    
     if(isVoiceRecorded) //keep previous state of pageVoice
     {
         return;
     }
+    
     radioToggle(voiceButs, voiceBackBut);
-    radioToggle(voiceTexts, startingAudDevText);
-    isVidStreamOn = false;
-    startMic();    
+    
+    const recBut = isFirstVoiceRecording ? voiceRecBut : voiceRerecBut;
+    recBut.classList.toggle('hidden', false);
+    radioToggle(voiceTexts);
 });
 
 audioSelect.addEventListener('change', () =>
@@ -301,39 +301,22 @@ audioSelect.addEventListener('change', () =>
         //console.log("IDs identical. Do not start Mic.");
         return;
     }
+    initFftAudioCtx();
     radioToggle(voiceTexts, startingAudDevText);    
     const recBut = isFirstVoiceRecording ? voiceRecBut : voiceRerecBut;
     recBut.classList.toggle("hidden", true);
-    startMic();    
+    
+    // We update the unified stream using startCamera which updates both devices
+    startCamera().then(() => {
+        if (isAudStreamOn) {
+            recBut.classList.toggle('hidden', false);
+            radioToggle(voiceTexts);
+            startFft();
+        } else {
+            radioToggle(voiceTexts, invalidAudDevText);
+        }
+    });
 });
-
-async function startMic()
-{
-    audDevCheckPromIdA++;
-    const audDevCheckPromIdB = audDevCheckPromIdA;
-    await stopStream();
-    await getMediaPermission();
-    const streamOn = await startAudioStream();
-    await updateDeviceList();
-    if(audDevCheckPromIdA != audDevCheckPromIdB)
-    {
-        return;
-    }
-    startingAudDevText.classList.toggle("hidden", true);
-    isAudStreamOn = streamOn;
-    if(isAudStreamOn)
-    {
-        //console.log("audStreamOn. starting Fft...");
-        isAudStreamOn = true;
-        voiceRecBut.classList.toggle('hidden', false);
-        radioToggle(voiceTexts);
-        startFft();
-    }
-    else
-    {
-        radioToggle(voiceTexts, invalidAudDevText); 
-    }
-}
 
 function recordAudio()
 {
@@ -372,14 +355,23 @@ voiceRecBut.addEventListener('click', () =>
 voiceRerecBut.addEventListener('click', async (e) =>
 {
     radioToggle(voiceTexts);
-    if(isVidStreamOn || !isAudStreamOn)
+    
+    // Reinitialize FFT AudioContext synchronously within the user gesture
+    // in case the underlying stream was restarted in the background.
+    initFftAudioCtx();
+    
+    if(!isAudStreamOn)
     {
-        isVidStreamOn = false;
-        isAudStreamOn = true;
-        await stopStream();
-        startAudioStream().then(recordAudio);
+        startCamera().then(() => {
+            if (isAudStreamOn) {
+                startFft();
+                recordAudio();
+            }
+        });
         return;
     }
+    
+    startFft();
     recordAudio();    
 });
 
@@ -431,6 +423,7 @@ voiceConfirmBut.addEventListener('click', () =>
         isPhotoTaken = false;
         deleteData();
         stopStream();
+        destroyFftAudioCtx();
         abortStream();
     })
     .catch((error) => 
