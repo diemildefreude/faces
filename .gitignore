@@ -1,5 +1,6 @@
 # sql
-faces_2026_08.sql
+*.sql
+!faces.sql
 
 # Logs
 logs
