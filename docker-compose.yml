@@ -11,7 +11,7 @@ services:
     environment:
       - DB_HOST=sep-common-db-1
       - DB_USER=root
-      - DB_PASS=root
+      - DB_PASS=${SHARED_DB_PASSWORD}
       - DB_NAME=${DB_NAME:-faces_db}
       - DB_PORT=3306
     networks:
