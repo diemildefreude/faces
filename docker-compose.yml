@@ -10,8 +10,8 @@ services:
       - ./dist/justImg:/var/www/html/dist/justImg
     environment:
       - DB_HOST=sep-common-db-1
-      - DB_USER=${DB_USER:-root}
-      - DB_PASS=${DB_PASS}
+      - DB_USER=root
+      - DB_PASS=root
       - DB_NAME=${DB_NAME:-faces_db}
       - DB_PORT=3306
     networks:
