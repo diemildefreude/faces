@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 
 # Install required systems packages and Node.js 20 for Vite asset bundling
 RUN apt-get update && apt-get install -y curl \
